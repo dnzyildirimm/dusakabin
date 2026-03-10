@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DuşaKabin">
+<meta name="theme-color" content="#0d0d0d">
+<title>DuşaKabin Fiyat Hesaplama</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #c8a96e;
+    --accent2: #e8c990;
+    --text: #f0ede8;
+    --muted: #888;
+    --green: #4ade80;
+    --red: #f87171;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: var(--accent); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 22px; height: 22px; fill: #0d0d0d; }
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--accent); }
+  header p { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .loading-bar {
+    height: 3px; background: var(--border);
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+  }
+  .loading-bar::after {
+    content: ''; position: absolute; top: 0; left: 0; height: 100%;
+    width: 40%; background: var(--accent);
+    animation: loading 1s ease-in-out infinite alternate;
+  }
+  @keyframes loading { from { left: 0; width: 40%; } to { left: 60%; width: 40%; } }
+  .loading-bar.hidden { display: none; }
+
+  .container { max-width: 680px; margin: 0 auto; padding: 20px 16px 100px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; margin-bottom: 16px;
+  }
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+    letter-spacing: 2px; color: var(--accent); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-title .step {
+    background: var(--accent); color: #0d0d0d;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-family: 'DM Sans', sans-serif; font-weight: 700;
+  }
+
+  /* MODEL */
+  .model-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .model-btn {
+    border: 2px solid var(--border); background: var(--surface2);
+    border-radius: 12px; padding: 14px 8px; cursor: pointer;
+    text-align: center; transition: all 0.2s; position: relative;
+  }
+  .model-btn:hover { border-color: var(--accent); }
+  .model-btn.active { border-color: var(--accent); background: rgba(200,169,110,0.08); }
+  .model-btn.active::after {
+    content: '✓'; position: absolute; top: 6px; right: 8px;
+    color: var(--accent); font-size: 12px; font-weight: 700;
+  }
+  .model-icon { font-size: 28px; margin-bottom: 6px; display: block; }
+  .model-name { font-size: 12px; font-weight: 600; }
+  .model-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* DIMS */
+  .dims-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .field-unit { position: relative; }
+  .field-unit input { padding-right: 38px; }
+  .field-unit::after { content: attr(data-unit); position: absolute; right: 12px; bottom: 11px; color: var(--muted); font-size: 12px; pointer-events: none; }
+  input[type=number] {
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 11px 12px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    outline: none; transition: border-color 0.2s; width: 100%;
+    -moz-appearance: textfield;
+  }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type=number]:focus { border-color: var(--accent); }
+  input[type=number]::placeholder { color: #444; }
+
+  /* PILLS */
+  .option-group { margin-bottom: 16px; }
+  .option-group:last-child { margin-bottom: 0; }
+  .option-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+  .option-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    border: 1.5px solid var(--border); background: var(--surface2);
+    border-radius: 8px; padding: 7px 14px; cursor: pointer;
+    font-size: 13px; font-weight: 500; transition: all 0.15s; white-space: nowrap;
+  }
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill.active { border-color: var(--accent); background: rgba(200,169,110,0.12); color: var(--accent2); font-weight: 600; }
+
+  /* ADET */
+  .qty-wrap { display: flex; align-items: center; width: fit-content; }
+  .qty-btn {
+    width: 36px; height: 40px; background: var(--surface2);
+    border: 1.5px solid var(--border); color: var(--text);
+    font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .qty-btn:first-child { border-radius: 10px 0 0 10px; border-right: none; }
+  .qty-btn:last-child { border-radius: 0 10px 10px 0; border-left: none; }
+  .qty-btn:hover { background: var(--border); }
+  .qty-display {
+    width: 48px; height: 40px; background: var(--surface2);
+    border-top: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; color: var(--accent);
+  }
+
+  textarea {
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 11px 12px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    outline: none; resize: none; height: 72px; width: 100%;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+
+  /* FİYAT BOTTOM SHEET */
+  .price-sheet {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 12px 16px 28px;
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
+    z-index: 200;
+    transition: transform 0.3s ease;
+  }
+  .price-sheet-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .price-sheet h3 { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px; color: var(--muted); }
+  .price-expand-btn {
+    background: none; border: none; color: var(--muted);
+    font-size: 18px; cursor: pointer; padding: 4px;
+  }
+  .price-main {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .price-big { font-family: 'Bebas Neue', sans-serif; font-size: 38px; color: var(--accent); letter-spacing: 1px; }
+  .price-big .cur { font-size: 22px; margin-right: 2px; }
+  .price-status { font-size: 11px; color: var(--muted); text-align: right; }
+
+  .price-detail {
+    display: none; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;
+  }
+  .price-detail.open { display: block; }
+  .pr { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .pr .lbl { color: var(--muted); }
+  .pr .val { font-weight: 600; }
+  .pr .val.plus { color: var(--accent); }
+
+  .hint { font-size: 11px; color: var(--muted); margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+
+  .no-select { text-align: center; padding: 6px 0; color: var(--muted); font-size: 13px; }
+
+  .btn-reset {
+    position: absolute; top: 12px; right: 52px;
+    background: none; border: 1px solid var(--border);
+    border-radius: 8px; color: var(--muted); font-size: 11px;
+    padding: 5px 10px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-reset:hover { border-color: var(--red); color: var(--red); }
+
+  .offline-banner {
+    background: rgba(248,113,113,0.15); border: 1px solid var(--red);
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+    font-size: 12px; color: var(--red); display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-bar" id="loading-bar"></div>
+
+<header>
+  <div class="logo-icon">
+    <svg viewBox="0 0 24 24"><path d="M4 4h16v2H4V4zm0 3h16v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7zm4 3a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm-8 3a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2z"/></svg>
+  </div>
+  <div>
+    <h1>DuşaKabin</h1>
+    <p>Anlık Fiyat Hesaplama</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="offline-banner" id="offline-banner">⚠️ İnternet bağlantısı yok. Son kaydedilen fiyatlar kullanılıyor.</div>
+
+  <!-- 1. MODEL -->
+  <div class="card">
+    <div class="card-title"><span class="step">1</span> Model Seçimi</div>
+    <div class="model-grid">
+      <div class="model-btn" data-model="walkin" onclick="selectModel(this)">
+        <span class="model-icon">🚿</span>
+        <div class="model-name">Sabit Cam</div>
+        <div class="model-sub">Walk-in</div>
+      </div>
+      <div class="model-btn" data-model="surgulu" onclick="selectModel(this)">
+        <span class="model-icon">🔲</span>
+        <div class="model-name">Sürgülü</div>
+        <div class="model-sub">Tek kapı</div>
+      </div>
+      <div class="model-btn" data-model="koseli" onclick="selectModel(this)">
+        <span class="model-icon">📐</span>
+        <div class="model-name">Köşeli</div>
+        <div class="model-sub">Pivot kapı</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ÖLÇÜLER -->
+  <div class="card">
+    <div class="card-title"><span class="step">2</span> Ölçüler</div>
+    <div class="dims-grid">
+      <div class="field">
+        <label>Genişlik</label>
+        <div class="field-unit" data-unit="cm">
+          <input type="number" id="width" placeholder="örn. 90" oninput="calculate()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Yükseklik</label>
+        <div class="field-unit" data-unit="cm">
+          <input type="number" id="height" placeholder="örn. 200" oninput="calculate()">
+        </div>
+      </div>
+      <div class="field" id="depth-field" style="display:none">
+        <label>Derinlik</label>
+        <div class="field-unit" data-unit="cm">
+          <input type="number" id="depth" placeholder="örn. 90" oninput="calculate()">
+        </div>
+      </div>
+    </div>
+    <div class="hint">💡 Köşeli modellerde derinlik de girilmelidir</div>
+  </div>
+
+  <!-- 3. ÖZELLİKLER -->
+  <div class="card">
+    <div class="card-title"><span class="step">3</span> Cam & Profil</div>
+    <div class="option-group">
+      <span class="option-label">Cam Kalınlığı</span>
+      <div class="option-pills">
+        <div class="pill active" data-group="glass" data-value="6" onclick="selectPill(this)">6 mm</div>
+        <div class="pill" data-group="glass" data-value="8" onclick="selectPill(this)">8 mm</div>
+        <div class="pill" data-group="glass" data-value="10" onclick="selectPill(this)">10 mm</div>
+      </div>
+    </div>
+    <div class="option-group">
+      <span class="option-label">Cam Rengi</span>
+      <div class="option-pills">
+        <div class="pill active" data-group="camrengi" data-value="seffaf" onclick="selectPill(this)">Şeffaf</div>
+        <div class="pill" data-group="camrengi" data-value="buzlu" onclick="selectPill(this)">Buzlu</div>
+        <div class="pill" data-group="camrengi" data-value="renkli" onclick="selectPill(this)">Renkli</div>
+      </div>
+    </div>
+    <div class="option-group">
+      <span class="option-label">Profil Rengi</span>
+      <div class="option-pills">
+        <div class="pill active" data-group="profil" data-value="krom" onclick="selectPill(this)">Krom</div>
+        <div class="pill" data-group="profil" data-value="mat" onclick="selectPill(this)">Mat Siyah</div>
+        <div class="pill" data-group="profil" data-value="altin" onclick="selectPill(this)">Altın</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ADET & NOT -->
+  <div class="card">
+    <div class="card-title"><span class="step">4</span> Adet & Not</div>
+    <div class="dims-grid" style="align-items:start">
+      <div class="field">
+        <label>Adet</label>
+        <div class="qty-wrap">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <div class="qty-display" id="qty-display">1</div>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Not</label>
+        <textarea id="notes" placeholder="Özel istek, montaj notu..."></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FİYAT BOTTOM SHEET -->
+<div class="price-sheet">
+  <button class="btn-reset" onclick="resetAll()">🗑 Temizle</button>
+  <div class="price-sheet-header">
+    <h3>FİYAT</h3>
+    <button class="price-expand-btn" onclick="toggleDetail()" id="expand-btn">▲</button>
+  </div>
+  <div class="price-detail open" id="price-detail">
+    <div class="no-select" id="detail-content">Model ve ölçü seçin</div>
+  </div>
+  <div class="price-main">
+    <div>
+      <div class="price-big" id="price-big"><span class="cur">₺</span><span id="price-val">—</span></div>
+      <div class="price-status" id="price-status">Model seçilmedi</div>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ⬇️ BURAYA KENDİ FIREBASE CONFIG'İNİZİ YAPIŞTIRACAKSINIZ
+  const firebaseConfig = {
+    apiKey: "AIzaSyBW4vYhZfgSNz3wKZheDVkAwKtmc9juIE4",
+    authDomain: "fiyat-hesaplama-ca2e5.firebaseapp.com",
+    databaseURL: "https://fiyat-hesaplama-ca2e5-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "fiyat-hesaplama-ca2e5",
+    storageBucket: "fiyat-hesaplama-ca2e5.firebasestorage.app",
+    messagingSenderId: "467572382348",
+    appId: "1:467572382348:web:6210b0091456a6892239a9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Varsayılan fiyatlar (Firebase bağlanana kadar)
+  window.prices = {
+    walkin: 2800, surgulu: 3200, koseli: 3600,
+    glass8: 400, glass10: 800,
+    buzlu: 600, renkli: 1200,
+    mat: 500, altin: 900
+  };
+
+  // Firebase'den fiyatları çek
+  const pricesRef = ref(db, 'prices');
+  onValue(pricesRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      window.prices = { ...window.prices, ...data };
+      localStorage.setItem('cachedPrices', JSON.stringify(window.prices));
+      document.getElementById('loading-bar').classList.add('hidden');
+      calculate();
+    }
+  }, (error) => {
+    // Offline - cache kullan
+    const cached = localStorage.getItem('cachedPrices');
+    if (cached) window.prices = JSON.parse(cached);
+    document.getElementById('offline-banner').style.display = 'block';
+    document.getElementById('loading-bar').classList.add('hidden');
+    calculate();
+  });
+</script>
+
+<script>
+  let selectedModel = null;
+  let qty = 1;
+  let detailOpen = true;
+  const sel = { glass: '6', camrengi: 'seffaf', profil: 'krom' };
+
+  function selectModel(el) {
+    document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    selectedModel = el.dataset.model;
+    document.getElementById('depth-field').style.display = selectedModel === 'koseli' ? 'block' : 'none';
+    calculate();
+  }
+
+  function selectPill(el) {
+    const g = el.dataset.group;
+    document.querySelectorAll(`[data-group="${g}"]`).forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    sel[g] = el.dataset.value;
+    calculate();
+  }
+
+  function changeQty(d) {
+    qty = Math.max(1, Math.min(99, qty + d));
+    document.getElementById('qty-display').textContent = qty;
+    calculate();
+  }
+
+  function toggleDetail() {
+    detailOpen = !detailOpen;
+    document.getElementById('price-detail').classList.toggle('open', detailOpen);
+    document.getElementById('expand-btn').textContent = detailOpen ? '▲' : '▼';
+  }
+
+  function fmt(n) { return Math.round(n).toLocaleString('tr-TR'); }
+  function gv(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+
+  function calculate() {
+    const p = window.prices || {};
+    const w = gv('width'), h = gv('height'), d = gv('depth');
+
+    if (!selectedModel) {
+      document.getElementById('price-val').textContent = '—';
+      document.getElementById('price-status').textContent = 'Model seçilmedi';
+      document.getElementById('detail-content').innerHTML = '<div class="no-select">Model ve ölçü seçin</div>';
+      return;
+    }
+    if (!w || !h) {
+      document.getElementById('price-val').textContent = '—';
+      document.getElementById('price-status').textContent = 'Ölçü girilmedi';
+      document.getElementById('detail-content').innerHTML = '<div class="no-select">Genişlik ve yükseklik girin</div>';
+      return;
+    }
+
+    let m2;
+    if (selectedModel === 'koseli' && d > 0) m2 = ((w + d) / 100) * (h / 100);
+    else m2 = (w / 100) * (h / 100);
+
+    const base = (p[selectedModel] || 0) * m2;
+    let glassDiff = 0;
+    if (sel.glass === '8') glassDiff = (p.glass8 || 0) * m2;
+    else if (sel.glass === '10') glassDiff = (p.glass10 || 0) * m2;
+
+    let camDiff = 0;
+    if (sel.camrengi === 'buzlu') camDiff = p.buzlu || 0;
+    else if (sel.camrengi === 'renkli') camDiff = p.renkli || 0;
+
+    let profilDiff = 0;
+    if (sel.profil === 'mat') profilDiff = p.mat || 0;
+    else if (sel.profil === 'altin') profilDiff = p.altin || 0;
+
+    const unit = base + glassDiff + camDiff + profilDiff;
+    const total = unit * qty;
+
+    const modelNames = { walkin: 'Sabit Cam', surgulu: 'Sürgülü', koseli: 'Köşeli' };
+    const glassNames = { '6': '6mm', '8': '8mm', '10': '10mm' };
+    const camNames = { seffaf: 'Şeffaf', buzlu: 'Buzlu', renkli: 'Renkli' };
+    const profilNames = { krom: 'Krom', mat: 'Mat Siyah', altin: 'Altın' };
+
+    document.getElementById('price-val').textContent = fmt(total);
+    document.getElementById('price-status').textContent =
+      qty > 1 ? `${qty} adet × ₺${fmt(unit)}` : `${m2.toFixed(2)} m² · ${modelNames[selectedModel]}`;
+
+    document.getElementById('detail-content').innerHTML = `
+      <div class="pr"><span class="lbl">Model</span><span class="val">${modelNames[selectedModel]}</span></div>
+      <div class="pr"><span class="lbl">Boyut</span><span class="val">${w}×${h}cm${selectedModel==='koseli'&&d?' D:'+d+'cm':''}</span></div>
+      <div class="pr"><span class="lbl">Alan</span><span class="val">${m2.toFixed(2)} m²</span></div>
+      <div class="pr"><span class="lbl">Taban</span><span class="val">₺${fmt(base)}</span></div>
+      ${glassDiff>0?`<div class="pr"><span class="lbl">Cam ${glassNames[sel.glass]} farkı</span><span class="val plus">+₺${fmt(glassDiff)}</span></div>`:''}
+      ${camDiff>0?`<div class="pr"><span class="lbl">Cam rengi (${camNames[sel.camrengi]})</span><span class="val plus">+₺${fmt(camDiff)}</span></div>`:''}
+      ${profilDiff>0?`<div class="pr"><span class="lbl">Profil (${profilNames[sel.profil]})</span><span class="val plus">+₺${fmt(profilDiff)}</span></div>`:''}
+      ${qty>1?`<div class="pr"><span class="lbl">Birim fiyat</span><span class="val">₺${fmt(unit)}</span></div><div class="pr"><span class="lbl">Adet</span><span class="val">× ${qty}</span></div>`:''}
+    `;
+  }
+
+  function resetAll() {
+    selectedModel = null; qty = 1;
+    document.getElementById('qty-display').textContent = '1';
+    document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+    ['width','height','depth'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('depth-field').style.display = 'none';
+    document.getElementById('notes').value = '';
+    sel.glass='6'; sel.camrengi='seffaf'; sel.profil='krom';
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-group="glass"][data-value="6"]').classList.add('active');
+    document.querySelector('[data-group="camrengi"][data-value="seffaf"]').classList.add('active');
+    document.querySelector('[data-group="profil"][data-value="krom"]').classList.add('active');
+    calculate();
+  }
+
+  window.prices = {
+    walkin: 2800, surgulu: 3200, koseli: 3600,
+    glass8: 400, glass10: 800, buzlu: 600, renkli: 1200, mat: 500, altin: 900
+  };
+</script>
+</body>
+</html>
