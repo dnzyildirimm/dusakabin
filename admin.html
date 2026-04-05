@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — DuşaKabin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#060d1a;--s1:#0d1829;--s2:#111f35;--s3:#162540;--b1:#1e3050;--b2:#243a5e;--acc:#3b82f6;--acc2:#60a5fa;--text:#e8f0fe;--t2:#94afd4;--muted:#4a6585;--green:#34d399;--red:#f87171}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;background-image:radial-gradient(ellipse at 20% 0%,rgba(59,130,246,.08) 0%,transparent 60%)}
+
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:36px 32px;width:100%;max-width:380px}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-icon{width:52px;height:52px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:13px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 0 24px rgba(59,130,246,.4)}
+.login-icon svg{width:26px;height:26px;fill:white}
+.login-logo h1{font-size:22px;font-weight:800}
+.login-logo p{font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase}
+.form-field{margin-bottom:14px}
+.form-field label{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.form-field input{width:100%;background:var(--s2);border:1.5px solid var(--b2);border-radius:10px;padding:11px 13px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.form-field input:focus{border-color:var(--acc)}
+.btn-login{width:100%;padding:12px;background:linear-gradient(135deg,var(--acc),#1d4ed8);border:none;border-radius:10px;color:white;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
+.login-error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);margin-top:10px;display:none;text-align:center}
+
+#admin-panel{display:none}
+header{background:rgba(13,24,41,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--b1);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(59,130,246,.4)}
+.logo-icon svg{width:18px;height:18px;fill:white}
+header h1{font-size:16px;font-weight:800}
+.admin-badge{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:var(--acc2);font-size:9px;font-weight:700;letter-spacing:2px;padding:3px 8px;border-radius:5px;text-transform:uppercase}
+.btn-logout{background:none;border:1px solid var(--b2);border-radius:7px;color:var(--muted);font-size:11px;font-family:'Outfit',sans-serif;padding:6px 12px;cursor:pointer;transition:all .2s}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+.container{max-width:760px;margin:0 auto;padding:24px 16px 60px}
+.section-title{font-size:10px;font-weight:700;color:var(--acc2);letter-spacing:2px;text-transform:uppercase;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--b1)}
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.price-item{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:14px}
+.price-item label{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
+.piw{position:relative}
+.piw input{width:100%;background:var(--s2);border:1.5px solid var(--b2);border-radius:8px;padding:10px 36px 10px 11px;color:var(--text);font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;outline:none;transition:border-color .2s;-moz-appearance:textfield}
+.piw input::-webkit-outer-spin-button,.piw input::-webkit-inner-spin-button{-webkit-appearance:none}
+.piw input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.piw.has-unit::after{content:attr(data-unit);position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:11px;pointer-events:none}
+.price-hint{font-size:10px;color:var(--muted);margin-top:5px}
+
+.btn-save{width:100%;padding:13px;background:linear-gradient(135deg,var(--acc),#1d4ed8);border:none;border-radius:11px;color:white;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin-top:24px;transition:all .2s}
+.btn-save:hover{opacity:.9;transform:translateY(-1px)}
+.btn-save:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.save-status{text-align:center;margin-top:12px;font-size:13px;min-height:18px}
+.save-status.ok{color:var(--green)}
+.save-status.err{color:var(--red)}
+.last-updated{text-align:center;font-size:11px;color:var(--muted);margin-top:6px}
+
+.preview-card{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:16px;margin-top:24px;position:relative;overflow:hidden}
+.preview-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(59,130,246,.25),transparent)}
+.preview-title{font-size:10px;font-weight:700;color:var(--acc2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+.prev-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.prev-row:last-child{border:none;padding-top:8px;margin-top:2px}
+.prev-row .k{color:var(--muted)}
+.prev-row .v{font-weight:700;color:var(--acc2)}
+
+@media(max-width:480px){.price-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v2H4V4zm0 3h16v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7zm4 3a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm-8 3a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2z"/></svg></div>
+      <h1>DuşaKabin</h1>
+      <p>Admin Girişi</p>
+    </div>
+    <div class="form-field"><label>E-posta</label><input type="email" id="login-email" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="form-field"><label>Şifre</label><input type="password" id="login-pass" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" id="login-btn" onclick="doLogin()">Giriş Yap</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<div id="admin-panel">
+  <header>
+    <div class="header-left">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v2H4V4zm0 3h16v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7zm4 3a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm-8 3a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2z"/></svg></div>
+      <h1>Admin Panel</h1><span class="admin-badge">YÖNETİCİ</span>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Çıkış Yap</button>
+  </header>
+
+  <div class="container">
+
+    <div class="section-title">Cam Fiyatları</div>
+    <div class="price-grid">
+      <div class="price-item">
+        <label>6mm Cam (₺/m²)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_cam6" placeholder="800"></div>
+      </div>
+      <div class="price-item">
+        <label>8mm Cam (₺/m²)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_cam8" placeholder="1100"></div>
+        <div class="price-hint">Sadece tek cam modelde</div>
+      </div>
+    </div>
+
+    <div class="section-title">Alüminyum</div>
+    <div class="price-grid">
+      <div class="price-item">
+        <label>Parlak Alüminyum (₺/kg)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_alu_parlak" placeholder="290"></div>
+      </div>
+      <div class="price-item">
+        <label>Siyah Alüminyum (₺/kg)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_alu_siyah" placeholder="280"></div>
+      </div>
+      <div class="price-item">
+        <label>Ray Katsayısı (kg/mt)</label>
+        <div class="piw has-unit" data-unit="kg/mt"><input type="number" id="p_ray_kg" placeholder="0.9" step="0.01"></div>
+      </div>
+      <div class="price-item">
+        <label>Dikey Profil Katsayısı (kg/mt)</label>
+        <div class="piw has-unit" data-unit="kg/mt"><input type="number" id="p_dikkey_kg" placeholder="0.3" step="0.01"></div>
+      </div>
+      <div class="price-item">
+        <label>Kutu Profil Katsayısı (kg/mt)</label>
+        <div class="piw has-unit" data-unit="kg/mt"><input type="number" id="p_kutu_kg" placeholder="0.45" step="0.01"></div>
+        <div class="price-hint">Sadece köşelide</div>
+      </div>
+    </div>
+
+    <div class="section-title">Kulp</div>
+    <div class="price-grid">
+      <div class="price-item">
+        <label>Metal Çift Delik (₺/adet)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_kulp_metal_cift" placeholder="1000"></div>
+      </div>
+      <div class="price-item">
+        <label>Metal Tek Delik (₺/adet)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_kulp_metal_tek" placeholder="320"></div>
+      </div>
+      <div class="price-item">
+        <label>Plastik Çift Delik (₺/adet)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_kulp_plastik_cift" placeholder="100"></div>
+      </div>
+      <div class="price-item">
+        <label>Plastik Tek Delik (₺/adet)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_kulp_plastik_tek" placeholder="50"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Aksesuar & Diğer</div>
+    <div class="price-grid">
+      <div class="price-item">
+        <label>Teker Takımı (₺/takım)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_teker_tam" placeholder="350"></div>
+        <div class="price-hint">Yarım takım otomatik /2</div>
+      </div>
+      <div class="price-item">
+        <label>Fitil + Mıknatıs (₺/set)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_fitil_miknatis" placeholder="200"></div>
+      </div>
+      <div class="price-item">
+        <label>Ray Takozu (₺/adet)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_ray_takoz" placeholder="25"></div>
+        <div class="price-hint">Sadece köşelide</div>
+      </div>
+      <div class="price-item">
+        <label>Köşe Takozu (₺/adet)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_kose_takoz" placeholder="25"></div>
+        <div class="price-hint">Sadece köşelide</div>
+      </div>
+      <div class="price-item">
+        <label>Ray Fitili (₺/mt)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_ray_fitil" placeholder="10"></div>
+      </div>
+      <div class="price-item">
+        <label>Gergi Kolu (₺/adet)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_gergi" placeholder="600"></div>
+        <div class="price-hint">Sadece tek camda</div>
+      </div>
+      <div class="price-item">
+        <label>Kumlamalı Cam (₺/adet)</label>
+        <div class="piw has-unit" data-unit="₺"><input type="number" id="p_kumlama" placeholder="150"></div>
+      </div>
+    </div>
+
+    <button class="btn-save" id="save-btn" onclick="savePrices()">💾 Fiyatları Kaydet</button>
+    <div class="save-status" id="save-status"></div>
+    <div class="last-updated" id="last-updated"></div>
+
+    <div class="preview-card">
+      <div class="preview-title">Örnek — Köşeli 90×90×190cm, Parlak, Metal Kulp</div>
+      <div id="preview-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyBW4vYhZfgSNz3wKZheDVkAwKtmc9juIE4",
+  authDomain:"fiyat-hesaplama-ca2e5.firebaseapp.com",
+  databaseURL:"https://fiyat-hesaplama-ca2e5-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"fiyat-hesaplama-ca2e5",
+  storageBucket:"fiyat-hesaplama-ca2e5.firebasestorage.app",
+  messagingSenderId:"467572382348",
+  appId:"1:467572382348:web:6210b0091456a6892239a9"
+});
+const auth=getAuth(app), db=getDatabase(app);
+
+onAuthStateChanged(auth,user=>{
+  if(user){ document.getElementById('login-screen').style.display='none'; document.getElementById('admin-panel').style.display='block'; loadPrices(); }
+  else{ document.getElementById('login-screen').style.display='flex'; document.getElementById('admin-panel').style.display='none'; }
+});
+
+window.doLogin=async()=>{
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const btn=document.getElementById('login-btn'), err=document.getElementById('login-error');
+  err.style.display='none'; btn.disabled=true; btn.textContent='Giriş yapılıyor...';
+  try{ await signInWithEmailAndPassword(auth,email,pass); }
+  catch(e){ err.textContent='Hatalı e-posta veya şifre.'; err.style.display='block'; btn.disabled=false; btn.textContent='Giriş Yap'; }
+};
+window.doLogout=async()=>await signOut(auth);
+
+const KEYS=['cam6','cam8','alu_parlak','alu_siyah','ray_kg','dikkey_kg','kutu_kg','kulp_metal_cift','kulp_metal_tek','kulp_plastik_cift','kulp_plastik_tek','teker_tam','fitil_miknatis','ray_takoz','kose_takoz','ray_fitil','gergi','kumlama'];
+
+function loadPrices(){
+  onValue(ref(db,'birimFiyatlar'),snap=>{
+    const d=snap.val()||{};
+    KEYS.forEach(k=>{ const el=document.getElementById('p_'+k); if(el&&d[k]!=null) el.value=d[k]; });
+    if(d._updated) document.getElementById('last-updated').textContent='Son güncelleme: '+new Date(d._updated).toLocaleString('tr-TR');
+    updatePreview(d);
+  });
+}
+
+window.savePrices=async()=>{
+  const btn=document.getElementById('save-btn'), status=document.getElementById('save-status');
+  btn.disabled=true; btn.textContent='⏳ Kaydediliyor...'; status.className='save-status'; status.textContent='';
+  const gv=id=>parseFloat(document.getElementById(id)?.value)||0;
+  const data={};
+  KEYS.forEach(k=>data[k]=gv('p_'+k));
+  data._updated=new Date().toISOString();
+  try{
+    await set(ref(db,'birimFiyatlar'),data);
+    status.textContent='✅ Kaydedildi!'; status.className='save-status ok';
+    document.getElementById('last-updated').textContent='Son güncelleme: '+new Date().toLocaleString('tr-TR');
+    updatePreview(data);
+  } catch(e){ status.textContent='❌ Hata: '+e.message; status.className='save-status err'; }
+  btn.disabled=false; btn.textContent='💾 Fiyatları Kaydet';
+  setTimeout(()=>{ status.textContent=''; },4000);
+};
+
+function updatePreview(p){
+  const fmt=n=>Math.round(n).toLocaleString('tr-TR');
+  const SOL=0.9, SAG=0.9, H=1.9;
+  const aluF=p.alu_parlak||290, rayKg=p.ray_kg||0.9, dikeyKg=p.dikkey_kg||0.3, kutuKg=p.kutu_kg||0.45;
+  const camM2=(SOL+SAG)*H;
+  const camT=camM2*(p.cam6||700);
+  const rayMt=(SOL+SAG)*2, dikeyMt=4*H, kutuMt=SOL+SAG;
+  const rayT=rayMt*rayKg*aluF;
+  const dikeyT=dikeyMt*dikeyKg*aluF;
+  const kutuT=kutuMt*kutuKg*aluF;
+  const tekerT=p.teker_tam||350;
+  const takozT=2*(p.ray_takoz||25)+(p.kose_takoz||25);
+  const fitilMikT=p.fitil_miknatis||200;
+  const rayFitilT=((SOL+SAG)/2)*(p.ray_fitil||10);
+  const kulpT=p.kulp_metal_cift||1000;
+  const toplam=camT+rayT+dikeyT+kutuT+tekerT+takozT+fitilMikT+rayFitilT+kulpT;
+  document.getElementById('preview-content').innerHTML=
+    `<div class="prev-row"><span class="k">Cam 6mm (${camM2.toFixed(2)}m²)</span><span class="v">₺${fmt(camT)}</span></div>`+
+    `<div class="prev-row"><span class="k">Alüminyum ray (${rayMt.toFixed(2)}mt)</span><span class="v">₺${fmt(rayT)}</span></div>`+
+    `<div class="prev-row"><span class="k">Alüminyum dikey (${dikeyMt.toFixed(2)}mt)</span><span class="v">₺${fmt(dikeyT)}</span></div>`+
+    `<div class="prev-row"><span class="k">Alüminyum kutu (${kutuMt.toFixed(2)}mt)</span><span class="v">₺${fmt(kutuT)}</span></div>`+
+    `<div class="prev-row"><span class="k">Tekerlek (tam takım)</span><span class="v">₺${fmt(tekerT)}</span></div>`+
+    `<div class="prev-row"><span class="k">Takozlar</span><span class="v">₺${fmt(takozT)}</span></div>`+
+    `<div class="prev-row"><span class="k">Fitil + Mıknatıs</span><span class="v">₺${fmt(fitilMikT)}</span></div>`+
+    `<div class="prev-row"><span class="k">Ray Fitili</span><span class="v">₺${fmt(rayFitilT)}</span></div>`+
+    `<div class="prev-row"><span class="k">Metal Çift Delik Kulp (1 takım)</span><span class="v">₺${fmt(kulpT)}</span></div>`+
+    `<div class="prev-row"><span class="k" style="font-weight:700;color:var(--text)">TOPLAM</span><span class="v" style="color:var(--green);font-size:15px">₺${fmt(toplam)}</span></div>`;
+}
+</script>
+</body>
+</html>

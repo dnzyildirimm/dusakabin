@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DuşaKabin">
+<meta name="theme-color" content="#0a0f1e">
+<title>DuşaKabin — Maliyet Hesaplama</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070d1f;
+  --glass:rgba(255,255,255,.04);
+  --glass2:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --acc:#4f8ef7;--acc2:#7eb3ff;--acc-glow:rgba(79,142,247,.25);
+  --text:#eef2ff;--t2:rgba(238,242,255,.55);--muted:rgba(238,242,255,.28);
+  --green:#3dd68c;--yellow:#f5c842;--red:#f87171;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse at 20% 10%,rgba(79,142,247,.12) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 90%,rgba(120,80,220,.08) 0%,transparent 50%);
+}
+header{
+  padding:15px 24px;display:flex;align-items:center;gap:12px;
+  background:rgba(7,13,31,.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+}
+.logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--acc),#6a3de8);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 20px var(--acc-glow);flex-shrink:0}
+.logo-mark svg{width:18px;height:18px;fill:white}
+.logo-text h1{font-size:15px;font-weight:700}
+.logo-text p{font-size:10px;color:var(--muted);letter-spacing:.5px}
+
+.app{display:grid;grid-template-columns:1fr 390px;min-height:calc(100vh - 64px)}
+
+/* SOL VİZÜEL */
+.visual-panel{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 24px;position:sticky;top:64px;height:calc(100vh - 64px);
+  border-right:1px solid var(--border);
+}
+.cabin-preview{
+  width:100%;max-width:360px;aspect-ratio:.9;
+  background:linear-gradient(135deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,.02) 50%,rgba(79,142,247,.04) 100%);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,.12);border-radius:28px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  box-shadow:
+    0 8px 48px rgba(0,0,0,.6),
+    0 0 0 1px rgba(255,255,255,.04) inset,
+    0 1px 0 rgba(255,255,255,.1) inset;
+  transition:all .4s ease;
+}
+.cabin-preview::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.05) 0%,transparent 60%);
+  pointer-events:none;z-index:1;
+}
+.cabin-svg{width:82%;height:82%;transition:all .45s cubic-bezier(.4,0,.2,1)}
+.cabin-label{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  background:rgba(7,13,31,.75);backdrop-filter:blur(10px);
+  border:1px solid var(--border2);border-radius:8px;
+  padding:6px 18px;font-size:11px;font-weight:500;color:var(--t2);
+  white-space:nowrap;z-index:2;letter-spacing:.5px;
+}
+.no-sel-msg{text-align:center;color:var(--muted)}
+.no-sel-msg .icon{font-size:52px;margin-bottom:14px;opacity:.4;display:block}
+.no-sel-msg p{font-size:13px;font-weight:300;letter-spacing:.3px}
+
+/* SAĞ PANEL */
+.config-panel{
+  overflow-y:auto;padding:20px 18px 150px;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+.config-panel::-webkit-scrollbar{width:3px}
+.config-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.section{
+  background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.09);border-radius:16px;
+  padding:16px;margin-bottom:10px;position:relative;overflow:hidden;
+  transition:border-color .3s,box-shadow .3s;
+  box-shadow:0 2px 16px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.section::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+}
+.section.has-value{border-color:rgba(79,142,247,.25);box-shadow:0 0 20px rgba(79,142,247,.06)}
+.sec-title{
+  font-size:10px;font-weight:700;letter-spacing:2px;color:var(--acc2);
+  text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:7px;
+}
+.sec-num{
+  width:18px;height:18px;background:linear-gradient(135deg,var(--acc),#6a3de8);
+  border-radius:4px;display:inline-flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;color:white;flex-shrink:0;
+}
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type-btn{
+  border:1.5px solid var(--border);background:var(--glass2);border-radius:12px;
+  padding:14px 10px;cursor:pointer;text-align:center;transition:all .22s;position:relative;
+}
+.type-btn:active{transform:scale(.96)}
+.type-btn.active{border-color:var(--acc);background:rgba(79,142,247,.1);box-shadow:0 0 20px rgba(79,142,247,.15)}
+.type-btn.active::after{content:'✓';position:absolute;top:6px;right:9px;color:var(--acc2);font-size:10px;font-weight:700}
+.type-icon{font-size:24px;margin-bottom:6px;display:block}
+.type-name{font-size:11px;font-weight:600;color:var(--text)}
+
+.dims-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.fu{position:relative}
+.fu input{padding-right:38px}
+.fu::after{content:attr(data-unit);position:absolute;right:11px;bottom:10px;color:var(--muted);font-size:11px;pointer-events:none}
+input[type=number]{
+  background:rgba(255,255,255,.05);border:1.5px solid var(--border2);
+  border-radius:10px;padding:10px 11px;color:var(--text);
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;
+  outline:none;transition:all .2s;width:100%;-moz-appearance:textfield;
+}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input[type=number]:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-glow)}
+input[type=number]::placeholder{color:var(--muted);font-weight:300}
+
+.opt-group{margin-bottom:14px}
+.opt-group:last-child{margin-bottom:0}
+.opt-label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:block}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{
+  border:1.5px solid var(--border);background:var(--glass2);
+  border-radius:8px;padding:6px 13px;cursor:pointer;
+  font-size:12px;font-weight:500;transition:all .18s;white-space:nowrap;color:var(--t2);
+}
+.pill:active{transform:scale(.95)}
+.pill.active{border-color:var(--acc);background:rgba(79,142,247,.12);color:var(--acc2);font-weight:600;box-shadow:0 0 10px rgba(79,142,247,.15)}
+.pill-parlak.active{border-color:#c0c8d8 !important;color:#c8d4e8 !important}
+.pill-siyah.active{border-color:#666 !important;color:#aaa !important}
+
+.warn-box{
+  background:rgba(245,200,66,.07);border:1px solid rgba(245,200,66,.22);
+  border-radius:10px;padding:10px 14px;margin-top:10px;
+  font-size:12px;color:var(--yellow);line-height:1.6;display:none;
+}
+.warn-box.show{display:block}
+.warn-btns{display:flex;gap:8px;margin-top:8px}
+.warn-btns button{padding:5px 14px;border-radius:6px;font-size:11px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;border:none}
+.btn-devam{background:rgba(245,200,66,.18);color:var(--yellow)}
+.btn-iptal{background:var(--glass2);color:var(--muted);border:1px solid var(--border) !important}
+
+/* ALT BAR */
+.price-bar{
+  position:fixed;bottom:0;right:0;width:390px;
+  background:rgba(5,10,24,.94);backdrop-filter:blur(28px);
+  border-top:1px solid var(--border2);border-left:1px solid var(--border);
+  padding:14px 20px 30px;z-index:200;
+}
+.price-bar::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(79,142,247,.5),transparent);
+}
+.pb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.pb-label{font-size:9px;font-weight:700;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase}
+.btn-reset{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:10px;padding:4px 10px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
+.btn-reset:hover{border-color:var(--red);color:var(--red)}
+.pb-price{font-size:46px;font-weight:800;color:white;letter-spacing:-2px;line-height:1}
+.pb-price.flash{animation:flash .4s ease}
+@keyframes flash{0%{transform:scale(1)}50%{transform:scale(1.03);color:var(--green)}100%{transform:scale(1)}}
+.pb-price .cur{font-size:16px;font-weight:400;color:var(--acc2);margin-right:1px;vertical-align:super}
+.pb-sub{font-size:11px;color:var(--muted);margin-top:5px}
+
+@media(max-width:820px){
+  .app{grid-template-columns:1fr;grid-template-rows:280px 1fr}
+  .visual-panel{position:relative;height:280px;top:0;border-right:none;border-bottom:1px solid var(--border);padding:16px}
+  .cabin-preview{max-width:220px;height:220px;aspect-ratio:auto}
+  .price-bar{width:100%;left:0;border-left:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M4 4h16v2H4V4zm0 3h16v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7zm4 3a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm-8 3a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2z"/></svg></div>
+  <div class="logo-text"><h1>DuşaKabin</h1><p>Maliyet Hesaplama</p></div>
+</header>
+
+<div class="app">
+
+  <div class="visual-panel">
+    <div class="cabin-preview" id="cabin-preview">
+      <div class="no-sel-msg" id="no-sel-msg">
+        <span class="icon">🚿</span>
+        <p>Kabin tipi seçin</p>
+      </div>
+      <svg class="cabin-svg" id="cabin-svg" style="display:none" viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="cabin-label" id="cabin-label" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="config-panel">
+
+    <div class="section" id="sec-tip">
+      <div class="sec-title"><span class="sec-num">1</span> Kabin Tipi</div>
+      <div class="type-grid">
+        <div class="type-btn" data-type="koseli" onclick="selectType(this)"><span class="type-icon">📐</span><div class="type-name">Köşeli</div></div>
+        <div class="type-btn" data-type="duz11" onclick="selectType(this)"><span class="type-icon">🔲</span><div class="type-name">Düz 1+1</div></div>
+        <div class="type-btn" data-type="duz22" onclick="selectType(this)"><span class="type-icon">⬛</span><div class="type-name">Düz 2+2</div></div>
+        <div class="type-btn" data-type="tekcam" onclick="selectType(this)"><span class="type-icon">🪟</span><div class="type-name">Tek Cam</div></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-olcu">
+      <div class="sec-title"><span class="sec-num">2</span> Ölçüler</div>
+      <div class="dims-grid">
+        <div class="field"><label id="sol-label">Genişlik</label><div class="fu" data-unit="cm"><input type="number" id="sol" placeholder="örn. 90" oninput="calculate()"></div></div>
+        <div class="field" id="sag-field" style="display:none"><label>Sağ Ölçü</label><div class="fu" data-unit="cm"><input type="number" id="sag" placeholder="örn. 90" oninput="calculate()"></div></div>
+        <div class="field"><label>Yükseklik</label><div class="fu" data-unit="cm"><input type="number" id="h" placeholder="örn. 190" oninput="calculate()"></div></div>
+      </div>
+      <div id="yan-panel-row" style="display:none;margin-top:12px">
+        <div class="opt-group" style="margin-bottom:10px">
+          <span class="opt-label">Yan Panel</span>
+          <div class="pills">
+            <div class="pill active" data-g="yanpanel" data-v="yok" onclick="selPill(this)">Yok</div>
+            <div class="pill" data-g="yanpanel" data-v="var" onclick="selPill(this)">Var</div>
+          </div>
+        </div>
+        <div class="field" id="yanpanel-w-field" style="display:none">
+          <label>Yan Panel Genişliği</label>
+          <div class="fu" data-unit="cm"><input type="number" id="wp" placeholder="örn. 30" oninput="calculate()"></div>
+        </div>
+      </div>
+      <div class="warn-box" id="warn-giris">
+        ⚠️ 150cm altında giriş payı çok düşük olacaktır. Devam etmek istiyor musunuz?
+        <div class="warn-btns">
+          <button class="btn-devam" onclick="warnDevam()">Evet, devam et</button>
+          <button class="btn-iptal" onclick="warnIptal()">İptal</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-sec">
+      <div class="sec-title"><span class="sec-num">3</span> Seçenekler</div>
+      <div class="opt-group">
+        <span class="opt-label">Profil Rengi</span>
+        <div class="pills">
+          <div class="pill pill-parlak active" data-g="profil" data-v="parlak" onclick="selPill(this)">✦ Parlak</div>
+          <div class="pill pill-siyah" data-g="profil" data-v="siyah" onclick="selPill(this)">◆ Siyah</div>
+        </div>
+      </div>
+      <div class="opt-group">
+        <span class="opt-label">Cam</span>
+        <div class="pills">
+          <div class="pill active" data-g="cam" data-v="6" onclick="selPill(this)">6 mm</div>
+          <div class="pill" data-g="cam" data-v="8" onclick="selPill(this)" id="pill-8mm" style="display:none">8 mm</div>
+          <div class="pill" id="pill-kumlu" data-g="kumlama" data-v="yok" onclick="toggleKumlama(this)">Kumlu</div>
+        </div>
+      </div>
+      <div class="opt-group" id="opt-kulp">
+        <span class="opt-label">Kulp</span>
+        <div class="pills">
+          <div class="pill active" data-g="kulp" data-v="metal_cift" onclick="selPill(this)">Metal Çift</div>
+          <div class="pill" data-g="kulp" data-v="metal_tek" onclick="selPill(this)">Metal Tek</div>
+          <div class="pill" data-g="kulp" data-v="plastik_cift" onclick="selPill(this)">Plastik Çift</div>
+          <div class="pill" data-g="kulp" data-v="plastik_tek" onclick="selPill(this)">Plastik Tek</div>
+        </div>
+      </div>
+      <div class="opt-group" id="opt-zemin" style="display:none">
+        <span class="opt-label">Zemin Profili</span>
+        <div class="pills">
+          <div class="pill active" data-g="zemin" data-v="yok" onclick="selPill(this)">Yok</div>
+          <div class="pill" data-g="zemin" data-v="var" onclick="selPill(this)">Var</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="price-bar">
+  <div class="pb-top">
+    <span class="pb-label">Toplam Maliyet</span>
+    <button class="btn-reset" onclick="resetAll()">🗑 Sıfırla</button>
+  </div>
+  <div class="pb-price" id="pb-price"><span class="cur">₺</span><span id="ps-val">—</span></div>
+  <div class="pb-sub" id="ps-sub">Kabin tipi ve ölçü seçin</div>
+</div>
+
+<div style="display:none">
+  <input type="number" id="p_cam6" value="700">
+  <input type="number" id="p_cam8" value="940">
+  <input type="number" id="p_alu_parlak" value="290">
+  <input type="number" id="p_alu_siyah" value="280">
+  <input type="number" id="p_ray_kg" value="0.9">
+  <input type="number" id="p_dikkey_kg" value="0.3">
+  <input type="number" id="p_kutu_kg" value="0.45">
+  <input type="number" id="p_kulp_metal_cift" value="1000">
+  <input type="number" id="p_kulp_metal_tek" value="320">
+  <input type="number" id="p_kulp_plastik_cift" value="100">
+  <input type="number" id="p_kulp_plastik_tek" value="50">
+  <input type="number" id="p_teker_tam" value="350">
+  <input type="number" id="p_fitil_miknatis" value="200">
+  <input type="number" id="p_ray_takoz" value="25">
+  <input type="number" id="p_kose_takoz" value="25">
+  <input type="number" id="p_ray_fitil" value="10">
+  <input type="number" id="p_gergi" value="600">
+  <input type="number" id="p_kumlama" value="150">
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const app = initializeApp({
+  apiKey:"AIzaSyBW4vYhZfgSNz3wKZheDVkAwKtmc9juIE4",
+  authDomain:"fiyat-hesaplama-ca2e5.firebaseapp.com",
+  databaseURL:"https://fiyat-hesaplama-ca2e5-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"fiyat-hesaplama-ca2e5",
+  storageBucket:"fiyat-hesaplama-ca2e5.firebasestorage.app",
+  messagingSenderId:"467572382348",
+  appId:"1:467572382348:web:6210b0091456a6892239a9"
+});
+onValue(ref(getDatabase(app),'birimFiyatlar'),(snap)=>{
+  const d=snap.val(); if(!d) return;
+  Object.keys(d).forEach(k=>{ const el=document.getElementById('p_'+k); if(el) el.value=d[k]; });
+  loadP(); calculate();
+});
+</script>
+
+<script>
+const KEYS=['cam6','cam8','alu_parlak','alu_siyah','ray_kg','dikkey_kg','kutu_kg','kulp_metal_cift','kulp_metal_tek','kulp_plastik_cift','kulp_plastik_tek','teker_tam','fitil_miknatis','ray_takoz','kose_takoz','ray_fitil','gergi','kumlama'];
+let P={cam6:700,cam8:940,alu_parlak:290,alu_siyah:280,ray_kg:0.9,dikkey_kg:0.3,kutu_kg:0.45,kulp_metal_cift:1000,kulp_metal_tek:320,kulp_plastik_cift:100,kulp_plastik_tek:50,teker_tam:350,fitil_miknatis:200,ray_takoz:25,kose_takoz:25,ray_fitil:10,gergi:600,kumlama:150};
+let selectedType=null, warnConfirmed=false;
+const sel={cam:'6',profil:'parlak',kulp:'metal_cift',kumlama:'yok',yanpanel:'yok',zemin:'yok'};
+
+function loadP(){ KEYS.forEach(k=>{ const el=document.getElementById('p_'+k); if(el) P[k]=parseFloat(el.value)||0; }); }
+function fmt(n){ return Math.round(n).toLocaleString('tr-TR'); }
+function gv(id){ return parseFloat(document.getElementById(id)?.value)||0; }
+function aluF(){ return sel.profil==='siyah'?P.alu_siyah:P.alu_parlak; }
+function kulpF(){ return P['kulp_'+sel.kulp]||0; }
+
+function getProfilC(){ return sel.profil==='siyah'?'#252525':'#b0bccf'; }
+function getCamF(){
+  if(sel.kumlama==='var') return 'url(#kumlu)';
+  return 'url(#camG)';
+}
+
+function drawCabin(){
+  const svg=document.getElementById('cabin-svg');
+  const msg=document.getElementById('no-sel-msg');
+  const lbl=document.getElementById('cabin-label');
+  if(!selectedType){ svg.style.display='none'; msg.style.display='block'; lbl.style.display='none'; return; }
+  svg.style.display='block'; msg.style.display='none'; lbl.style.display='block';
+
+  const isSiyah=sel.profil==='siyah';
+  const isCift=sel.kulp==='metal_cift'||sel.kulp==='plastik_cift';
+  const pc=isSiyah?'#2a2a2a':'#b8c8d8'; // profil ana renk
+  const ph=isSiyah?'#444':'#d0dce8';    // profil highlight
+  const pd=isSiyah?'#111':'#8898b0';    // profil dark
+  const hasZemin=sel.zemin==='var';
+
+  // Cam dolgusu — kumlama varsa opak mat beyaz
+  const camFill=sel.kumlama==='var'?'rgba(230,232,235,0.82)':'url(#camG)';
+  const camStroke=sel.kumlama==='var'?'rgba(200,200,200,.4)':'rgba(100,170,240,.35)';
+  const camFilter=sel.kumlama==='var'?'':'url(#camGlow)';
+
+  const defs=`<defs>
+    <linearGradient id="camG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(210,235,255,0.32)"/>
+      <stop offset="45%" stop-color="rgba(175,215,252,0.13)"/>
+      <stop offset="100%" stop-color="rgba(155,200,248,0.26)"/>
+    </linearGradient>
+    <linearGradient id="camGSide" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="rgba(190,220,250,0.22)"/>
+      <stop offset="100%" stop-color="rgba(155,195,245,0.32)"/>
+    </linearGradient>
+    <linearGradient id="pV" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${pd}"/><stop offset="35%" stop-color="${ph}"/>
+      <stop offset="65%" stop-color="${pc}"/><stop offset="100%" stop-color="${pd}"/>
+    </linearGradient>
+    <linearGradient id="pH" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${ph}"/><stop offset="40%" stop-color="${pc}"/>
+      <stop offset="100%" stop-color="${pd}"/>
+    </linearGradient>
+    <linearGradient id="pSide" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${pd}"/><stop offset="100%" stop-color="${isSiyah?'#1a1a1a':'#a0b4c8'}"/>
+    </linearGradient>
+    <filter id="camGlow" x="-3%" y="-3%" width="106%" height="106%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="b"/>
+      <feColorMatrix in="b" values="0 0 0 0 0.3 0 0 0 0 0.6 0 0 0 0 1 0 0 0 0.3 0" result="g"/>
+      <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`;
+
+  const tN={koseli:'Köşeli',duz11:'Düz 1+1',duz22:'Düz 2+2',tekcam:'Tek Cam'};
+  let content='';
+
+  // Kulp: çift delik = yatay bar + iki delik, tek delik = topuz (daire)
+  function kulp(cx, cy){
+    const kc=isSiyah?'#333':'#c0ccd6';
+    const kd=isSiyah?'#555':'#8899aa';
+    if(isCift){
+      return `<rect x="${cx-14}" y="${cy-3.5}" width="28" height="7" fill="${kc}" rx="3.5" stroke="${kd}" stroke-width=".5"/>
+              <circle cx="${cx-7}" cy="${cy}" r="2.5" fill="${kd}"/>
+              <circle cx="${cx+7}" cy="${cy}" r="2.5" fill="${kd}"/>`;
+    } else {
+      // Topuz: daire
+      return `<circle cx="${cx}" cy="${cy}" r="7" fill="${kc}" stroke="${kd}" stroke-width="1"/>
+              <circle cx="${cx}" cy="${cy}" r="3.5" fill="${kd}" opacity=".6"/>`;
+    }
+  }
+
+  if(selectedType==='koseli'){
+    // İZOMETRİK L PERSPEKTİF
+    // Sol kanat: öne bakıyor (x: 40..190), sağ kanat: sağ duvara yaslanıyor (perspektif çizgilerle)
+    // İsometrik: sol kanat frontal, sağ kanat skew ile derinlik hissi
+    // Koordinatlar: frontal panel sol, perspektif panel sağ-yukarı
+
+    // Parametreler
+    const fL=40, fR=185, fT=60, fB=360; // frontal (sol) kanat sınırları
+    const fW=fR-fL, fH=fB-fT;
+    const pw=7;
+    // Perspektif (sağ) kanat — sağ tarafa skew ile
+    const sX0=fR+pw, sX1=sX0+110; // perspektif panelin x başlangıç ve bitiş
+    const skew=25; // üst sağa kaçma miktarı (perspektif)
+    const sT=fT+skew, sB=fB; // üst köşe skewlanmış
+
+    // Her kanat: 1 sabit + 1 kayar
+    const midF=fL+pw+(fW-pw*3)/2; // frontal orta profil x
+
+    const wp_val=gv('wp'), WP_val=wp_val/100;
+    const hasYP=sel.yanpanel==='var'&&wp_val>0;
+
+    content=`
+      <!-- === FRONTAL KANAT (sol) === -->
+      <!-- Sol dikey profil -->
+      <rect x="${fL}" y="${fT}" width="${pw}" height="${fH}" fill="url(#pV)" rx="1.5"/>
+      <!-- Sabit cam -->
+      <rect x="${fL+pw}" y="${fT}" width="${(fW-pw*3)/2}" height="${fH}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" filter="${camFilter}"/>
+      <rect x="${fL+pw}" y="${fT}" width="${(fW-pw*3)/2}" height="55" fill="rgba(255,255,255,.07)"/>
+      <!-- Orta profil -->
+      <rect x="${midF}" y="${fT}" width="${pw}" height="${fH}" fill="url(#pV)" rx="1"/>
+      <!-- Kayar cam -->
+      <rect x="${midF+pw}" y="${fT}" width="${(fW-pw*3)/2}" height="${fH}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" opacity=".88" filter="${camFilter}"/>
+      <rect x="${midF+pw}" y="${fT}" width="${(fW-pw*3)/2}" height="45" fill="rgba(255,255,255,.04)"/>
+      <!-- Ust ray frontal -->
+      <rect x="${fL}" y="${fT-pw}" width="${fW+pw}" height="${pw}" fill="url(#pH)" rx="1.5"/>
+      <!-- Alt ray frontal -->
+      <rect x="${fL}" y="${fB}" width="${fW+pw}" height="${pw}" fill="url(#pH)" rx="1.5"/>
+      ${hasZemin?`<!-- Zemin kutu profil (frontal) -->
+      <rect x="${fL}" y="${fB+pw}" width="${fW+pw}" height="10" fill="url(#pH)" rx="2" opacity=".75"/>`:''}
+
+      <!-- === KÖŞEYİ GÖSTEREN KÖŞE PROFİL === -->
+      <rect x="${fR}" y="${fT}" width="${pw}" height="${fH}" fill="url(#pV)" rx="1.5"/>
+
+      <!-- === PERSPEKTİF KANAT (sağ, derinliğe gidiyor) === -->
+      <!-- Perspektif cam sabit — trapez şekli (skew) -->
+      <polygon points="${sX0},${fT} ${sX0+50},${sT+5} ${sX0+50},${sB} ${sX0},${fB}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" filter="${camFilter}"/>
+      <polygon points="${sX0},${fT} ${sX0+50},${sT+5} ${sX0+50},${sT+55} ${sX0},${fT+50}" fill="rgba(255,255,255,.05)"/>
+      <!-- Orta perspektif profil -->
+      <polygon points="${sX0+50},${sT+5} ${sX0+54},${sT+5} ${sX0+54},${sB} ${sX0+50},${sB}" fill="url(#pSide)" rx="1"/>
+      <!-- Kayar cam perspektif -->
+      <polygon points="${sX0+54},${sT+5} ${sX1},${sT+skew} ${sX1},${sB} ${sX0+54},${sB}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" opacity=".84" filter="${camFilter}"/>
+      <polygon points="${sX0+54},${sT+5} ${sX1},${sT+skew} ${sX1},${sT+skew+45} ${sX0+54},${sT+45}" fill="rgba(255,255,255,.04)"/>
+      <!-- Sağ duvar perspektif -->
+      <polygon points="${sX1},${sT+skew} ${sX1+pw},${sT+skew} ${sX1+pw},${sB} ${sX1},${sB}" fill="url(#pSide)"/>
+      <!-- Üst ray perspektif -->
+      <polygon points="${fR},${fT-pw} ${sX1+pw},${sT+skew-pw} ${sX1+pw},${sT+skew} ${fR},${fT}" fill="url(#pH)" opacity=".8"/>
+      <!-- Alt ray perspektif -->
+      <polygon points="${fR},${fB} ${sX1+pw},${fB} ${sX1+pw},${fB+pw} ${fR},${fB+pw}" fill="url(#pH)" opacity=".7"/>
+      ${hasZemin?`<!-- Zemin kutu profil (perspektif) -->
+      <polygon points="${fR},${fB+pw} ${sX1+pw},${fB+pw} ${sX1+pw},${fB+pw+10} ${fR},${fB+pw+10}" fill="url(#pH)" opacity=".6"/>`:''}
+
+      <!-- KULPLAR -->
+      ${kulp(midF+pw+(fW-pw*3)/4, (fT+fB)/2)}
+      ${kulp(sX0+27, (fT+sT)/2+100)}
+    `;
+  } else if(selectedType==='duz11'){
+    const L=40,R=360,T=60,B=370,W=R-L,H=B-T, pw=7;
+    const hasYP=sel.yanpanel==='var'&&gv('wp')>0;
+    const ypW=hasYP?70:0; // yan panel pixel genişliği
+    // Sabit cam sol, kayar sağ
+    const sabW=(W-pw*2)/2;
+    const kayW=(W-pw*2)/2;
+    content=`
+      <rect x="${L}" y="${T}" width="${pw}" height="${H}" fill="url(#pV)" rx="1.5"/>
+      <rect x="${R-pw}" y="${T}" width="${pw}" height="${H}" fill="url(#pV)" rx="1.5"/>
+      <rect x="${L}" y="${T-pw}" width="${W}" height="${pw}" fill="url(#pH)" rx="1.5"/>
+      <rect x="${L}" y="${B}" width="${W}" height="${pw}" fill="url(#pH)" rx="1.5"/>
+      ${hasZemin?`<rect x="${L}" y="${B+pw}" width="${W}" height="10" fill="url(#pH)" rx="2" opacity=".75"/>`:''}
+      <!-- Sabit cam -->
+      <rect x="${L+pw}" y="${T}" width="${sabW}" height="${H}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" filter="${camFilter}"/>
+      <rect x="${L+pw}" y="${T}" width="${sabW}" height="55" fill="rgba(255,255,255,.07)"/>
+      <!-- Orta profil -->
+      <rect x="${L+pw+sabW}" y="${T}" width="${pw}" height="${H}" fill="url(#pV)" rx="1"/>
+      <!-- Kayar cam -->
+      <rect x="${L+pw+sabW+pw}" y="${T}" width="${kayW-pw}" height="${H}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" opacity=".88" filter="${camFilter}"/>
+      <rect x="${L+pw+sabW+pw}" y="${T}" width="${kayW-pw}" height="45" fill="rgba(255,255,255,.04)"/>
+      ${kulp(L+pw+sabW+pw+(kayW-pw)/2, (T+B)/2)}
+      ${hasYP?`<!-- Yan panel perspektif -->
+      <rect x="${R}" y="${T}" width="${pw}" height="${H}" fill="url(#pV)" rx="1"/>
+      <polygon points="${R},${T} ${R+ypW},${T+20} ${R+ypW},${B} ${R},${B}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" opacity=".85" filter="${camFilter}"/>
+      <polygon points="${R+ypW},${T+20} ${R+ypW+pw},${T+20} ${R+ypW+pw},${B} ${R+ypW},${B}" fill="url(#pSide)"/>
+      <polygon points="${R},${T-pw} ${R+ypW+pw},${T+20-pw} ${R+ypW+pw},${T+20} ${R},${T}" fill="url(#pH)" opacity=".7"/>
+      <polygon points="${R},${B} ${R+ypW+pw},${B} ${R+ypW+pw},${B+pw} ${R},${B+pw}" fill="url(#pH)" opacity=".6"/>`:''}
+    `;
+  } else if(selectedType==='duz22'){
+    const L=40,R=360,T=60,B=370,W=R-L,H=B-T,pw=7;
+    const hasYP=sel.yanpanel==='var'&&gv('wp')>0;
+    const ypW=hasYP?70:0;
+    const cw=Math.floor((W-pw*5)/4);
+    const x=[L+pw, L+pw+cw+pw, L+pw+cw*2+pw*2, L+pw+cw*3+pw*3];
+    content=`
+      <rect x="${L}" y="${T}" width="${pw}" height="${H}" fill="url(#pV)" rx="1.5"/>
+      <rect x="${R-pw}" y="${T}" width="${pw}" height="${H}" fill="url(#pV)" rx="1.5"/>
+      <rect x="${L}" y="${T-pw}" width="${W}" height="${pw}" fill="url(#pH)" rx="1.5"/>
+      <rect x="${L}" y="${B}" width="${W}" height="${pw}" fill="url(#pH)" rx="1.5"/>
+      ${hasZemin?`<rect x="${L}" y="${B+pw}" width="${W}" height="10" fill="url(#pH)" rx="2" opacity=".75"/>`:''}
+      ${[0,1,2,3].map(i=>`
+        <rect x="${x[i]}" y="${T}" width="${cw}" height="${H}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" opacity="${i===0||i===3?'1':'.88'}" filter="${camFilter}"/>
+        <rect x="${x[i]}" y="${T}" width="${cw}" height="${i===0||i===3?50:40}" fill="rgba(255,255,255,${i===0||i===3?'.07':'.04'})"/>
+        ${i<3?`<rect x="${x[i]+cw}" y="${T}" width="${pw}" height="${H}" fill="url(#pV)" rx="1" opacity="${i===1?'.85':'.7'}"/>`:''}
+      `).join('')}
+      ${kulp(x[1]+cw/2, (T+B)/2)}
+      ${kulp(x[2]+cw/2, (T+B)/2)}
+      ${hasYP?`<!-- Yan panel -->
+      <rect x="${R}" y="${T}" width="${pw}" height="${H}" fill="url(#pV)" rx="1"/>
+      <polygon points="${R},${T} ${R+ypW},${T+20} ${R+ypW},${B} ${R},${B}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" opacity=".85" filter="${camFilter}"/>
+      <polygon points="${R+ypW},${T+20} ${R+ypW+pw},${T+20} ${R+ypW+pw},${B} ${R+ypW},${B}" fill="url(#pSide)"/>
+      <polygon points="${R},${T-pw} ${R+ypW+pw},${T+20-pw} ${R+ypW+pw},${T+20} ${R},${T}" fill="url(#pH)" opacity=".7"/>
+      <polygon points="${R},${B} ${R+ypW+pw},${B} ${R+ypW+pw},${B+pw} ${R},${B+pw}" fill="url(#pH)" opacity=".6"/>`:''}
+    `;
+  } else if(selectedType==='tekcam'){
+    const L=60,R=340,T=40,B=380,H=B-T,W=R-L,pw=7;
+    content=`
+      <!-- Dikey profil -->
+      <rect x="${L}" y="${T}" width="${pw}" height="${H}" fill="url(#pV)" rx="1.5"/>
+      <!-- Cam -->
+      <rect x="${L+pw}" y="${T}" width="${W-pw}" height="${H}" fill="${camFill}" stroke="${camStroke}" stroke-width="1" filter="${camFilter}"/>
+      <rect x="${L+pw}" y="${T}" width="${W-pw}" height="65" fill="rgba(255,255,255,.08)"/>
+      <!-- İnce üst profil -->
+      <rect x="${L}" y="${T}" width="${W}" height="4" fill="url(#pH)" opacity=".4"/>
+      ${hasZemin?`<!-- Zemin kutu profil -->
+      <rect x="${L}" y="${B}" width="${W}" height="12" fill="url(#pH)" rx="2"/>`:''}
+    `;
+  }
+
+  svg.innerHTML=defs+content;
+  lbl.textContent=tN[selectedType]+(sel.profil==='siyah'?' · Siyah':' · Parlak')+(sel.kumlama==='var'?' · Kumlu':'')+(sel.zemin==='var'?' · Zemin Profil':'');
+}
+
+function selectType(btn){
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedType=btn.dataset.type;
+  warnConfirmed=false;
+  const isTek=selectedType==='tekcam', isKos=selectedType==='koseli', isDuz=selectedType==='duz11'||selectedType==='duz22';
+  document.getElementById('sol-label').textContent=isKos?'Sol Ölçü':'Genişlik';
+  document.getElementById('sag-field').style.display=isKos?'block':'none';
+  document.getElementById('yan-panel-row').style.display=isDuz?'block':'none';
+  if(!isDuz){ sel.yanpanel='yok'; document.getElementById('yanpanel-w-field').style.display='none'; const wp=document.getElementById('wp'); if(wp)wp.value=''; resetPill('yanpanel','yok'); }
+  document.getElementById('pill-8mm').style.display=isTek?'':'none';
+  if(!isTek&&sel.cam==='8'){ sel.cam='6'; resetPill('cam','6'); }
+  document.getElementById('opt-kulp').style.display=isTek?'none':'block';
+  document.getElementById('opt-zemin').style.display=isTek?'block':'none';
+  if(!isTek) sel.zemin='yok';
+  document.getElementById('warn-giris').classList.remove('show');
+  drawCabin(); calculate();
+}
+
+function resetPill(g,v){
+  document.querySelectorAll('[data-g="'+g+'"]').forEach(p=>p.classList.remove('active'));
+  const el=document.querySelector('[data-g="'+g+'"][data-v="'+v+'"]');
+  if(el){ el.classList.add('active'); } sel[g]=v;
+}
+
+function selPill(el){
+  const g=el.dataset.g;
+  document.querySelectorAll('[data-g="'+g+'"]').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active'); sel[g]=el.dataset.v;
+  if(g==='yanpanel'){
+    const show=el.dataset.v==='var';
+    document.getElementById('yanpanel-w-field').style.display=show?'block':'none';
+    if(!show){ const wp=document.getElementById('wp'); if(wp)wp.value=''; }
+  }
+  drawCabin(); calculate();
+}
+
+function toggleKumlama(el){
+  if(sel.kumlama==='var'){ sel.kumlama='yok'; el.classList.remove('active'); }
+  else { sel.kumlama='var'; el.classList.add('active'); }
+  drawCabin(); calculate();
+}
+
+function warnDevam(){ warnConfirmed=true; document.getElementById('warn-giris').classList.remove('show'); calculate(); }
+function warnIptal(){ document.getElementById('sol').value=''; document.getElementById('warn-giris').classList.remove('show'); setNoSel('Ölçüleri girin'); }
+
+function calculate(){
+  if(!selectedType) return setNoSel('Kabin tipi seçin');
+  const sol=gv('sol'), sag=gv('sag'), h=gv('h');
+  if(!sol||!h) return setNoSel('Ölçüleri girin');
+  if(selectedType==='koseli'&&!sag) return setNoSel('Sağ ölçüyü girin');
+  const SOL=sol/100, SAG=sag/100, H=h/100;
+  const camF=sel.cam==='8'?P.cam8:P.cam6;
+  const aluKg=aluF(), rayKg=P.ray_kg, dikeyKg=P.dikkey_kg, kutuKg=P.kutu_kg;
+  let t=0;
+
+  if(selectedType==='koseli'){
+    t+=(SOL+SAG)*H*camF;
+    t+=(SOL+SAG)*2*rayKg*aluKg;
+    t+=4*H*dikeyKg*aluKg;
+    t+=(SOL+SAG)*kutuKg*aluKg;
+    t+=P.teker_tam+2*P.ray_takoz+P.kose_takoz+P.fitil_miknatis;
+    t+=((SOL+SAG)/2)*P.ray_fitil;
+    t+=kulpF();
+    if(sel.kumlama==='var') t+=4*P.kumlama;
+  } else if(selectedType==='duz11'){
+    const wp=gv('wp'), WP=wp/100, hasP=sel.yanpanel==='var'&&wp>0;
+    t+=(hasP?(SOL+WP):SOL)*H*camF;
+    t+=SOL*2*rayKg*aluKg+(hasP?6:4)*H*dikeyKg*aluKg;
+    if(hasP) t+=WP*2*rayKg*aluKg;
+    t+=P.teker_tam/2+P.fitil_miknatis+(SOL/2)*P.ray_fitil+kulpF()/2;
+    if(sel.kumlama==='var') t+=(hasP?3:2)*P.kumlama;
+  } else if(selectedType==='duz22'){
+    if(sol<150&&!warnConfirmed){ document.getElementById('warn-giris').classList.add('show'); return; }
+    const wp=gv('wp'), WP=wp/100, hasP=sel.yanpanel==='var'&&wp>0;
+    t+=(hasP?(SOL+WP):SOL)*H*camF;
+    t+=SOL*2*rayKg*aluKg+(hasP?6:4)*H*dikeyKg*aluKg;
+    if(hasP) t+=WP*2*rayKg*aluKg;
+    t+=P.teker_tam+2*P.fitil_miknatis+(SOL/2)*P.ray_fitil+kulpF();
+    if(sel.kumlama==='var') t+=(hasP?5:4)*P.kumlama;
+  } else if(selectedType==='tekcam'){
+    t+=SOL*H*camF+H*dikeyKg*aluKg+P.gergi;
+    if(sel.zemin==='var') t+=SOL*rayKg*aluKg;
+  }
+
+  const tN={koseli:'Köşeli',duz11:'Düz 1+1',duz22:'Düz 2+2',tekcam:'Tek Cam'};
+  const dimStr=selectedType==='koseli'?sol+'×'+sag+'×'+h+' cm':sol+'×'+h+' cm';
+  document.getElementById('ps-val').textContent=fmt(t);
+  const pb=document.getElementById('pb-price');
+  pb.classList.remove('flash'); void pb.offsetWidth; pb.classList.add('flash');
+  document.getElementById('ps-sub').textContent=tN[selectedType]+' · '+dimStr;
+}
+
+function setNoSel(msg){
+  document.getElementById('ps-val').textContent='—';
+  document.getElementById('ps-sub').textContent=msg;
+  document.getElementById('warn-giris').classList.remove('show');
+}
+
+function resetAll(){
+  selectedType=null;
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  ['sol','sag','h','wp'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  document.getElementById('sag-field').style.display='none';
+  document.getElementById('yan-panel-row').style.display='none';
+  document.getElementById('yanpanel-w-field').style.display='none';
+  document.getElementById('opt-kulp').style.display='block';
+  document.getElementById('opt-zemin').style.display='none';
+  document.getElementById('pill-8mm').style.display='none';
+  document.getElementById('warn-giris').classList.remove('show');
+  warnConfirmed=false;
+  Object.assign(sel,{cam:'6',profil:'parlak',kulp:'metal_cift',kumlama:'yok',yanpanel:'yok',zemin:'yok'});
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  ['[data-g="cam"][data-v="6"]','[data-g="profil"][data-v="parlak"]',
+   '[data-g="kulp"][data-v="metal_cift"]','[data-g="zemin"][data-v="yok"]','[data-g="yanpanel"][data-v="yok"]']
+  .forEach(s=>{ const el=document.querySelector(s); if(el)el.classList.add('active'); });
+  drawCabin(); setNoSel('Kabin tipi ve ölçü seçin');
+}
+</script>
+</body>
+</html>
